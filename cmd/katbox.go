@@ -5,7 +5,10 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/kitkat-group/katbox/pkg/kontent"
+
 	"github.com/kitkat-group/katbox/pkg/ksettings"
+	"github.com/kitkat-group/katbox/pkg/ui"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -24,7 +27,21 @@ var katboxCmd = &cobra.Command{
 	Short: "The \"katbox\" is used to manage articles, artifacts and resources for the KitKat team",
 	Run: func(cmd *cobra.Command, args []string) {
 		log.SetLevel(log.Level(logLevel))
-		cmd.Help()
+
+		// Load the User preferences
+		settings, err := ksettings.LoadUserSettings()
+		if err != nil {
+			log.Fatalf("No settings for user generated, create with katbox user")
+		}
+
+		// Retreive the content
+		articles, err := kontent.Retrieve(settings)
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+
+		// Retreive the content
+		ui.MainUI(articles, settings)
 		return
 	},
 }
@@ -40,7 +57,7 @@ var katboxCmdUser = &cobra.Command{
 			ksettings.GenerateDefaultSettings(*userSettingsPath)
 			return
 		}
-		u.SettingsUI("Edit existing Settings", ksettings.KsettingsEditors)
+		u.EditExistingSettings(*userSettingsPath, "Edit existing Settings")
 		return
 	},
 }
@@ -48,7 +65,7 @@ var katboxCmdUser = &cobra.Command{
 var logLevel int
 
 func init() {
-	userSettingsPath = katboxCmdUser.Flags().String("settings", "~/.katbox/usrcfg.json", "Path to User Settings")
+	userSettingsPath = katboxCmdUser.Flags().String("settings", "", "Path to User Settings")
 	katboxCmd.AddCommand(katboxCmdUser)
 }
 

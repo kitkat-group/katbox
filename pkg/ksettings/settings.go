@@ -52,6 +52,24 @@ func GenerateDefaultSettings(path string) (*User, error) {
 	return usr, nil
 }
 
+// EditExistingSettings -
+func (u *User) EditExistingSettings(path, title string) error {
+
+	// Start by checking the home directory
+	homeDirectory, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+
+	if path == "" {
+		path = fmt.Sprintf("%s/%s/%s", homeDirectory, ksettingsDir, ksettingsUserConfig)
+	}
+
+	u.SettingsUI(title, KsettingsEditors)
+	u.SaveUserSettingsToFile(path)
+	return nil
+}
+
 // LoadUserSettings - this will attempt to populate the user settings from the default file
 func LoadUserSettings() (*User, error) {
 	// Start by checking the home directory
@@ -65,7 +83,7 @@ func LoadUserSettings() (*User, error) {
 	// Use the load Settings function
 	usr, err := LoadUserSettingsFromFile(path)
 	if err != nil {
-		log.Infof("%v", err)
+		return nil, err
 	}
 	return usr, nil
 }

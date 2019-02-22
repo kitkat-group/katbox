@@ -13,11 +13,18 @@ import (
 
 // This package provides all of the handling of the "Main" User interface, interfaces for alternative use-cases should be in their own package
 
+// All articles is used to hold all articles to go back to searching everything
+var allArticles *kontent.Articles
+
 //MainUI starts up the katbox User Interface
 func MainUI(a *kontent.Articles, s *ksettings.User) error {
 	// Check for a nil pointer
 	if a == nil {
 		return fmt.Errorf("No katbox articles were loaded")
+	}
+
+	if allArticles == nil {
+		allArticles = a
 	}
 
 	// Debug output the size of the contents
@@ -30,6 +37,7 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetCurrentNode(root)
+	application := tview.NewApplication()
 
 	// Add Github articles to the tree
 	ghNode := tview.NewTreeNode("GitHub Repositories").SetReference("GitHub").SetSelectable(true)
@@ -88,9 +96,57 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 		}
 	})
 
-	if err := tview.NewApplication().SetRoot(tree, true).Run(); err != nil {
+	// Add additional input capturing
+	tree.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlF:
+			// Stop the existing UI
+			application.Stop()
+			// Start the search UI
+			subset := SearchUI(allArticles)
+			// Restart the main UI
+			MainUI(subset, s)
+		default:
+			return event
+		}
+		return nil
+	})
+
+	if err := application.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}
+
+	return nil
+}
+
+//SearchUI -
+func SearchUI(a *kontent.Articles) *kontent.Articles {
+
+	title := "Search"
+	label := "Search string (RegEx)"
+	for {
+		app := tview.NewApplication()
+
+		form := tview.NewForm().
+			AddInputField(label, "", 30, nil, nil).
+			AddButton("Search", func() { app.Stop() })
+
+		form.SetBorder(true).SetTitle(title).SetTitleAlign(tview.AlignLeft)
+
+		if err := app.SetRoot(form, true).Run(); err != nil {
+			panic(err)
+		}
+		searchString := form.GetFormItemByLabel(label).(*tview.InputField).GetText()
+		newArticles, err := a.SearchKeywords(searchString)
+		if err == nil {
+			return newArticles
+		}
+		title = err.Error()
+	}
+}
+
+// This function will take the full article set and build a tree from any search parameters
+func buildTree(search string, a *kontent.Articles) *tview.TreeNode {
 
 	return nil
 }

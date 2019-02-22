@@ -65,8 +65,12 @@ var katboxCmdUser = &cobra.Command{
 var logLevel int
 
 func init() {
+	katboxCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 5, "Set the logging level [0=panic, 3=warning, 5=debug]")
+
 	userSettingsPath = katboxCmdUser.Flags().String("settings", "", "Path to User Settings")
 	katboxCmd.AddCommand(katboxCmdUser)
+	log.SetLevel(log.Level(logLevel))
+
 }
 
 // Execute - starts the command parsing process
@@ -83,7 +87,6 @@ func Execute() {
 		logLevel = int(log.InfoLevel)
 	}
 
-	log.SetLevel(log.Level(logLevel))
 	if err := katboxCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

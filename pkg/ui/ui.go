@@ -100,8 +100,11 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 	tree.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyCtrlF:
+			// Stop the existing UI
 			application.Stop()
+			// Start the search UI
 			subset := SearchUI(allArticles)
+			// Restart the main UI
 			MainUI(subset, s)
 		default:
 			return event
@@ -123,10 +126,13 @@ func SearchUI(a *kontent.Articles) *kontent.Articles {
 	label := "Search string (RegEx)"
 	for {
 		app := tview.NewApplication()
+
 		form := tview.NewForm().
 			AddInputField(label, "", 30, nil, nil).
 			AddButton("Search", func() { app.Stop() })
+
 		form.SetBorder(true).SetTitle(title).SetTitleAlign(tview.AlignLeft)
+
 		if err := app.SetRoot(form, true).Run(); err != nil {
 			panic(err)
 		}

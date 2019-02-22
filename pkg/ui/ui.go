@@ -102,7 +102,6 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 		case tcell.KeyCtrlF:
 			application.Stop()
 			subset := SearchUI(allArticles)
-			fmt.Printf("woo")
 			MainUI(subset, s)
 		default:
 			return event

@@ -6,6 +6,10 @@ type Articles struct {
 	Tools    []Tool             `json:"tools"`
 	Snippets []Snippet          `json:"snippets"`
 	Posts    []Post             `json:"posts"`
+	TeamTodo []Todo             `json:"teamTodo"`
+
+	// This will be populated by a locally hosted file
+	UserTodo []Todo `json:"userTodo,omitempty"`
 }
 
 // GitHubRepository contains an array of repositories that will be useful
@@ -42,4 +46,12 @@ type Post struct {
 	Internal    bool     `json:"internal"`
 	Blog        bool     `json:"blog"`
 	Keywords    []string `json:"keywords"`
+}
+
+// Todo contain an array of Todo tasks
+type Todo struct {
+	Name     string   `json:"name"`
+	ByDate   string   `json:"time"`
+	Priority int      `json:"priority"`
+	Keywords []string `json:"keywords"`
 }

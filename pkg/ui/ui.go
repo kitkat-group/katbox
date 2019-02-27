@@ -5,6 +5,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gdamore/tcell"
+	"github.com/micmonay/keybd_event"
 	"github.com/rivo/tview"
 
 	"github.com/kitkat-group/katbox/pkg/kontent"
@@ -15,6 +16,20 @@ import (
 
 // All articles is used to hold all articles to go back to searching everything
 var allArticles *kontent.Articles
+
+// uiBugFix - This is used to fix the issue with tcell dropping a keystroke between new tcell.screens being created
+// TODO (thebsdbox) remove this when tcell issue #194 is fixed
+func uiBugFix() {
+	kb, err := keybd_event.NewKeyBonding()
+	if err != nil {
+		return
+	}
+	//set keys
+	kb.SetKeys(keybd_event.VK_SPACE)
+
+	//launch
+	kb.Launching()
+}
 
 //MainUI starts up the katbox User Interface
 func MainUI(a *kontent.Articles, s *ksettings.User) error {
@@ -60,7 +75,7 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 
 			var subset *kontent.Articles
 			application.Suspend(func() { subset = SearchUI(allArticles) })
-
+			uiBugFix()
 			// Get new tree
 			newRoot := buildTree(subset)
 			root.ClearChildren()
@@ -81,6 +96,8 @@ func MainUI(a *kontent.Articles, s *ksettings.User) error {
 
 //SearchUI -
 func SearchUI(a *kontent.Articles) *kontent.Articles {
+
+	uiBugFix()
 
 	title := "Search"
 	label := "Search string (RegEx)"
@@ -150,10 +167,32 @@ func buildTree(a *kontent.Articles) *tview.TreeNode {
 		tools.AddChild(childNode)
 	}
 
+	// Add Team todo to the tree
+	teamtodo := tview.NewTreeNode("TeamTodo").SetReference("TeamTodo").SetSelectable(true)
+	teamtodo.SetColor(tcell.ColorBlue)
+
+	for x := range a.TeamTodo {
+		childNode := tview.NewTreeNode(a.TeamTodo[x].Name).SetReference(x).SetSelectable(true)
+		teamtodo.AddChild(childNode)
+	}
+
+	// Add User todo to the tree
+	usertodo := tview.NewTreeNode("UserTodo").SetReference("UserTodo").SetSelectable(true)
+	usertodo.SetColor(tcell.ColorOrange)
+
+	for x := range a.UserTodo {
+		childNode := tview.NewTreeNode(a.UserTodo[x].Name).SetReference(x).SetSelectable(true)
+		usertodo.AddChild(childNode)
+	}
+
 	// Add all of the children to the tree structure
+	root.AddChild(usertodo)
+	root.AddChild(teamtodo)
+
 	root.AddChild(ghNode)
 	root.AddChild(posts)
 	root.AddChild(snippets)
 	root.AddChild(tools)
+
 	return root
 }
